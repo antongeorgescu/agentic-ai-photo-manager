@@ -1,4 +1,4 @@
-# Photo Manager Pipeline
+# Agentic AI Photo Manager
 
 
 ## Handling mltimedia files' attributes with ffmpeg
