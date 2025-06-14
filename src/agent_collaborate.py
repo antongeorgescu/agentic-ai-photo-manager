@@ -19,52 +19,21 @@ from semantic_kernel.functions.kernel_function_decorator import kernel_function
 from agent_plugin.DevOpsPlugin import DevopsPlugin
 from agent_plugin.LogFilePlugin import LogFilePlugin
 
+# Get the root folder two levels up from the current file
+root_folder = Path(__file__).resolve().parent.parent
+print(root_folder)
+
 PHOTO_ORGANIZER = "Photo_Organizer"
-PHOTO_ORGANIZER_INSTRUCTIONS = """
-Analyze the given log file or the response from the devops assistant.
-Recommend which one of the following actions should be taken:
-
-Restart service {service_name}
-Rollback transaction
-Redeploy resource {resource_name}
-Increase quota
-
-If there are no issues or if the issue has already been resolved, respond with "INCIDENT_MANAGER > No action needed."
-If none of the options resolve the issue, respond with "Escalate issue."
-
-RULES:
-- Do not perform any corrective actions yourself.
-- Read the log file on every turn.
-- Prepend your response with this text: "INCIDENT_MANAGER > {logfilepath} | "
-- Only respond with the corrective action instructions.
-"""
+with open(f"{root_folder}/src/agent_instructions/photo_organizer.txt", "r") as file:
+    PHOTO_ORGANIZER_INSTRUCTIONS = file.read()
 
 VIDEO_ORGANIZER = "Video_Organizer"
-VIDEO_ORGANIZER_INSTRUCTIONS = """
-Read the instructions from the INCIDENT_MANAGER and apply the appropriate resolution function. 
-Return the response as "{function_response}"
-If the instructions indicate there are no issues or actions needed, 
-take no action and respond with "No action needed."
-
-RULES:
-- Use the instructions provided.
-- Do not read any log files yourself.
-- Prepend your response with this text: "DEVOPS_ASSISTANT > "
-"""
+with open(f"{root_folder}/src/agent_instructions/video_organizer.txt", "r") as file:
+    VIDEO_ORGANIZER_INSTRUCTIONS = file.read()
 
 DEFECT_ANALYST = "Defect_Analyst"
-DEFECT_ANALYST_INSTRUCTIONS = """
-Read the instructions from the INCIDENT_MANAGER and apply the appropriate resolution function. 
-Return the response as "{function_response}"
-If the instructions indicate there are no issues or actions needed, 
-take no action and respond with "No action needed."
-
-RULES:
-- Use the instructions provided.
-- Do not read any log files yourself.
-- Prepend your response with this text: "DEVOPS_ASSISTANT > "
-"""
-
+with open(f"{root_folder}/src/agent_instructions/defect_analyst.txt", "r") as file:
+    DEFECT_ANALYST_INSTRUCTIONS = file.read()
 
 async def main():
     # Clear the console
