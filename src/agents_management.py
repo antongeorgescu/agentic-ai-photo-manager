@@ -1,11 +1,9 @@
-import asyncio
-import os
-import textwrap
-from datetime import datetime
-from pathlib import Path
-import shutil
+from azure.identity.aio import DefaultAzureCredential
+from azure.ai.agents.aio import AgentsClient
 import jwt
-from dotenv import load_dotenv
+import asyncio
+from pathlib import Path
+import os
 
 from azure.identity.aio import DefaultAzureCredential
 
@@ -18,6 +16,9 @@ from semantic_kernel.functions.kernel_function_decorator import kernel_function
 
 from agent_plugin.DevOpsPlugin import DevopsPlugin
 from agent_plugin.LogFilePlugin import LogFilePlugin
+
+# Replace with your actual Azure OpenAI endpoint
+agents_endpoint = "https://alvaz-sk-agents-resource.services.ai.azure.com/api/projects/alvaz-sk-agents"
 
 # Get the root folder two levels up from the current file
 root_folder = Path(__file__).resolve().parent.parent
@@ -35,36 +36,28 @@ DEFECT_ANALYST = "Defect_Analyst"
 with open(f"{root_folder}/src/agent_instructions/defect_analyst.txt", "r") as file:
     DEFECT_ANALYST_INSTRUCTIONS = file.read()
 
-async def main():
-    # Clear the console
-    os.system('cls' if os.name=='nt' else 'clear')
+AGENTS_GROUP_CHAT = None
 
-    # Get the log files
-    print("Getting log files...\n")
-    script_dir = Path(__file__).parent  # Get the directory of the script
-    src_path = script_dir / "sample_logs"
-    file_path = script_dir / "logs"
-    shutil.copytree(src_path, file_path, dirs_exist_ok=True)
-
-    # Load Azure OpenAI API settings from environment variables or a config file
-    api_keys = {
-        "endpoint": os.environ.get("AZURE_OPENAI_ENDPOINT"),
-        "api_key": os.environ.get("AZURE_OPENAI_API_KEY"),
-        "model_deployment_name": os.environ.get("AZURE_OPENAI_DEPLOYMENT_NAME"),
-    }
-    ai_agent_settings = AzureAIAgentSettings(
-        endpoint=api_keys["endpoint"],
-        api_key=api_keys["api_key"],
-        model_deployment_name=api_keys["model_deployment_name"],
-    )
-    print(ai_agent_settings.model_deployment_name)
-
-    async with (
+async def create_agents_and_group():
+     async with (
         DefaultAzureCredential(exclude_environment_credential=True, 
             exclude_managed_identity_credential=True) as creds,
         AzureAIAgent.create_client(credential=creds) as client,
-    ):
-    
+    ): 
+        # Load Azure OpenAI API settings from environment variables or a config file
+        api_keys = {
+            "endpoint": os.environ.get("AZURE_OPENAI_ENDPOINT"),
+            "api_key": os.environ.get("AZURE_OPENAI_API_KEY"),
+            "model_deployment_name": os.environ.get("AZURE_OPENAI_DEPLOYMENT_NAME"),
+        }
+
+        ai_agent_settings = AzureAIAgentSettings(
+            endpoint=api_keys["endpoint"],
+            api_key=api_keys["api_key"],
+            model_deployment_name=api_keys["model_deployment_name"],
+        )
+        print(ai_agent_settings.model_deployment_name)
+        
         # Create the incident manager agent on the Azure AI agent service
         photo_organizer_agent_definition = await client.agents.create_agent(
             model=ai_agent_settings.model_deployment_name,
@@ -97,7 +90,7 @@ async def main():
         )
 
         # Add the agents to a group chat with a custom termination and selection strategy
-        chat = AgentGroupChat(
+        AGENTS_GROUP_CHAT = AgentGroupChat(
             agents=[agent_photo_organizer, agent_video_organizer],
             termination_strategy=ApprovalTerminationStrategy(
                 agents=[agent_photo_organizer], 
@@ -105,40 +98,26 @@ async def main():
                 automatic_reset=True
             ),
             selection_strategy=SelectionStrategy(agents=[agent_photo_organizer,agent_video_organizer]),      
-        )
-        
+        )             
 
-         # Process log files
-        for filename in os.listdir(file_path):
-            logfile_msg = ChatMessageContent(role=AuthorRole.USER, content=f"USER > {file_path}/{filename}")
-            await asyncio.sleep(30) # Wait to reduce TPM
-            print(f"\nReady to process log file: {filename}\n")
-
-
-            # Append the current log file to the chat
-            await chat.add_chat_message(logfile_msg)
-            print()
-
-
-            try:
-                print()
-
-                # Invoke a response from the agents
-                async for response in chat.invoke():
-                    if response is None or not response.name:
-                        continue
-                    print(f"{response.content}")
-
-                
-            except Exception as e:
-                print(f"Error during chat invocation: {e}")
-                # If TPM rate exceeded, wait 60 secs
-                if "Rate limit is exceeded" in str(e):
-                    print ("Waiting...")
-                    await asyncio.sleep(60)
-                    continue
-                else:
-                    break
+async def list_ai_agents():
+    agent_list = []
+    
+    # Acquire a token
+    spn_creds = DefaultAzureCredential(exclude_environment_credential=True, 
+            exclude_managed_identity_credential=True)
+    
+    # Example of using the AgentsClient to list agents
+    async with AgentsClient(endpoint=agents_endpoint, credential=spn_creds) as client:
+        agents = client.list_agents()
+        async for agent in agents:
+            print(f"Agent ID: {agent.id}, Name: {agent.name}")
+            agent_list.append({
+                "id": agent.id,
+                "name": agent.name,
+                "instructions": agent.instructions
+            })
+    return agent_list
 
 # class for selection strategy
 class SelectionStrategy(SequentialSelectionStrategy):
@@ -164,9 +143,3 @@ class ApprovalTerminationStrategy(TerminationStrategy):
     async def should_agent_terminate(self, agent, history):
         """Check if the agent should terminate."""
         return "no action needed" in history[-1].content.lower()
-
-# Start the app
-if __name__ == "__main__":
-    # Load environment variables from .env file
-    load_dotenv()
-    asyncio.run(main())
