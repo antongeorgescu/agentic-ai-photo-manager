@@ -16,7 +16,7 @@ from semantic_kernel.functions.kernel_function_decorator import kernel_function
 from agent_plugin.DevOpsPlugin import DevopsPlugin
 from agent_plugin.LogFilePlugin import LogFilePlugin
 
-from agents_management import AGENTS_GROUP_CHAT, create_agents_and_group, list_ai_agents
+from manage_agents import AGENTS_GROUP_CHAT, create_agents_and_group, list_ai_agents, delete_agent
 
 # Get the root folder two levels up from the current file
 root_folder = Path(__file__).resolve().parent.parent
@@ -80,14 +80,17 @@ if __name__ == "__main__":
     # Load environment variables from .env file
     load_dotenv()
 
-    # create ai agents
-    asyncio.run(create_agents_and_group()) 
-
     # list ai agents
-    print("Available AI Agents:")
+    print("Delete all pre-existing AI Agents:")
     agent_list = asyncio.run(list_ai_agents())
     for agent in agent_list:
         print(f"Id:{agent["id"]},Name:{agent["name"]}")
+        asyncio.run(delete_agent(agent["id"]))
+        print(f"Deleted agent: {agent['name']}")
+    print("All pre-existing AI Agents deleted successfully.\n")
+
+    # create new set of ai agents
+    asyncio.run(create_agents_and_group())     
     
     # run media processing
     asyncio.run(main())
