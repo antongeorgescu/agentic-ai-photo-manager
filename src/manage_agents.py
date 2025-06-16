@@ -38,7 +38,7 @@ with open(f"{root_folder}/src/agent_instructions/defect_analyst.txt", "r") as fi
 
 AGENTS_GROUP_CHAT = None
 
-async def create_agents_and_group():
+async def activate_agents_and_group():
      async with (
         DefaultAzureCredential(exclude_environment_credential=True, 
             exclude_managed_identity_credential=True) as creds,
@@ -57,37 +57,67 @@ async def create_agents_and_group():
             model_deployment_name=api_keys["model_deployment_name"],
         )
         print(ai_agent_settings.model_deployment_name)
+
+        current_agents = []
+        async for agent in client.agents.list_agents():
+            current_agents.append(agent)
         
-        # Create the incident manager agent on the Azure AI agent service
-        photo_organizer_agent_definition = await client.agents.create_agent(
-            model=ai_agent_settings.model_deployment_name,
-            name=PHOTO_ORGANIZER,
-            instructions=PHOTO_ORGANIZER_INSTRUCTIONS
-        )
-        print(f"Created agent: {photo_organizer_agent_definition.name} with ID: {photo_organizer_agent_definition.id}")
+        # If it does not exist, create the incident manager agent on the Azure AI agent service
+        if PHOTO_ORGANIZER not in [agent.name for agent in current_agents]:
+            photo_organizer_agent_definition = await client.agents.create_agent(
+                model=ai_agent_settings.model_deployment_name,
+                name=PHOTO_ORGANIZER,
+                instructions=PHOTO_ORGANIZER_INSTRUCTIONS
+            )
+            print(f"Created agent: {photo_organizer_agent_definition.name} with ID: {photo_organizer_agent_definition.id}")
+        else:
+            # If the agent already exists, retrieve its definition  
+            # Get agent_id from the agent name and model_deployment_name     
+            photo_organizer_agent_id = next(
+                (agent.id for agent in current_agents if agent.name == PHOTO_ORGANIZER), None)
+            
+            photo_organizer_agent_definition = await client.agents.get_agent(
+                agent_id=photo_organizer_agent_id,
+            )
 
-
+            print(f"Retrieved existing agent: {photo_organizer_agent_definition.name} with ID: {photo_organizer_agent_definition.id}")
+            
         # Create a Semantic Kernel agent for the Azure AI incident manager agent
         agent_photo_organizer = AzureAIAgent(
             client=client,
             definition=photo_organizer_agent_definition,
             plugins=[LogFilePlugin()]
         )
-        print(f"Created agent: {agent_photo_organizer.name} with ID: {agent_photo_organizer.definition.id}")
+        print(f"Created SK agent instance: {agent_photo_organizer.name} with ID: {agent_photo_organizer.definition.id}")
 
-        # Create the devops agent on the Azure AI agent service
-        video_organizer_agent_definition = await client.agents.create_agent(
-            model=ai_agent_settings.model_deployment_name,
-            name=VIDEO_ORGANIZER,
-            instructions=VIDEO_ORGANIZER_INSTRUCTIONS,
-        )
-
+        # If it does not exist, create the devops manager agent on the Azure AI agent service
+        if VIDEO_ORGANIZER not in [agent.name for agent in current_agents]:
+            # Create the devops agent on the Azure AI agent service
+            video_organizer_agent_definition = await client.agents.create_agent(
+                model=ai_agent_settings.model_deployment_name,
+                name=VIDEO_ORGANIZER,
+                instructions=VIDEO_ORGANIZER_INSTRUCTIONS,
+            )
+            print(f"Created agent: {video_organizer_agent_definition.name} with ID: {video_organizer_agent_definition.id}")
+        else:
+            # If the agent already exists, retrieve its definition  
+            # Get agent_id from the agent name and model_deployment_name     
+            video_organizer_agent_id = next(
+                (agent.id for agent in current_agents if agent.name == VIDEO_ORGANIZER), None)
+            
+            # If the agent already exists, retrieve its definition
+            video_organizer_agent_definition = await client.agents.get_agent(
+                agent_id=video_organizer_agent_id
+            )
+            print(f"Retrieved existing agent: {video_organizer_agent_definition.name} with ID: {video_organizer_agent_definition.id}")
+        
         # Create a Semantic Kernel agent for the devops Azure AI agent
         agent_video_organizer = AzureAIAgent(
             client=client,
             definition=video_organizer_agent_definition,
             plugins=[DevopsPlugin()]
         )
+        print(f"Created SK agent instance: {agent_video_organizer.name} with ID: {agent_video_organizer.definition.id}")
 
         # Add the agents to a group chat with a custom termination and selection strategy
         AGENTS_GROUP_CHAT = AgentGroupChat(
