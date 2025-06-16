@@ -156,7 +156,7 @@ async def activate_agents_and_group():
             ),
             selection_strategy=SelectionStrategy(agents=[agent_media_analyst,agent_metadata_analyst,agent_content_analyst]),      
         )     
-        return AGENTS_GROUP_CHAT        
+        return AGENTS_GROUP_CHAT    
 
 async def delete_agent(agent_id):
     """Delete an agent by its ID."""
@@ -170,6 +170,25 @@ async def delete_agent(agent_id):
         print(f"Deleted agent with ID: {agent_id}")
 
 async def list_ai_agents():
+    agent_list = []
+    
+    # Acquire a token
+    spn_creds = DefaultAzureCredential(exclude_environment_credential=True, 
+            exclude_managed_identity_credential=True)
+    
+    # Example of using the AgentsClient to list agents
+    async with AgentsClient(endpoint=agents_endpoint, credential=spn_creds) as client:
+        agents = client.list_agents()
+        async for agent in agents:
+            print(f"Agent ID: {agent.id}, Name: {agent.name}")
+            agent_list.append({
+                "id": agent.id,
+                "name": agent.name,
+                "instructions": agent.instructions
+            })
+    return agent_list
+
+async def list_ai_agents_instances():
     agent_list = []
     
     # Acquire a token
