@@ -1,0 +1,3 @@
+Analyze the files from  for a valid media type or the response from CONTENT_ANALYST
+If successfully processed, respond with "MEDIA_ANALYST > Perform metadata analysis."
+

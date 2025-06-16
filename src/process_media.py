@@ -22,58 +22,54 @@ from manage_agents import AGENTS_GROUP_CHAT, activate_agents_and_group, list_ai_
 root_folder = Path(__file__).resolve().parent.parent
 print(root_folder)
 
-PHOTO_ORGANIZER = "Photo_Organizer"
-with open(f"{root_folder}/src/agent_instructions/photo_organizer.txt", "r") as file:
-    PHOTO_ORGANIZER_INSTRUCTIONS = file.read()
-
-VIDEO_ORGANIZER = "Video_Organizer"
-with open(f"{root_folder}/src/agent_instructions/video_organizer.txt", "r") as file:
-    VIDEO_ORGANIZER_INSTRUCTIONS = file.read()
-
-DEFECT_ANALYST = "Defect_Analyst"
-with open(f"{root_folder}/src/agent_instructions/defect_analyst.txt", "r") as file:
-    DEFECT_ANALYST_INSTRUCTIONS = file.read()
-
 async def main():
     # Clear the console
     os.system('cls' if os.name=='nt' else 'clear')
 
     # Get the log files
-    print("Getting log files...\n")
-    script_dir = Path(__file__).parent  # Get the directory of the script
-    src_path = script_dir / "sample_logs"
-    file_path = script_dir / "logs"
-    shutil.copytree(src_path, file_path, dirs_exist_ok=True)
+    print("Getting the media files...\n")
+    # script_dir = Path(__file__).parent  # Get the directory of the script
+    # src_path = script_dir / os.environ.get("MEDIA_SOURCE_PATH")
+    # file_path = script_dir / "logs"
+    # shutil.copytree(src_path, file_path, dirs_exist_ok=True)
 
-    # Process log files
-    for filename in os.listdir(file_path):
-        logfile_msg = ChatMessageContent(role=AuthorRole.USER, content=f"USER > {file_path}/{filename}")
-        await asyncio.sleep(30) # Wait to reduce TPM
-        print(f"\nReady to process log file: {filename}\n")
+    src_path = os.environ.get("MEDIA_SOURCE_PATH")
 
-        # Append the current log file to the chat
-        await AGENTS_GROUP_CHAT.add_chat_message(logfile_msg)
+    # Process media files folder
+    if not src_path or not os.path.exists(src_path):
+        print(f"Media source path '{src_path}' does not exist. Please check the environment variable.")
+        return
+    if not os.path.isdir(src_path):
+        print(f"Media source path '{src_path}' is not a directory. Please check the environment variable.")
+        return
+      
+    mediafolder_msg = ChatMessageContent(role=AuthorRole.USER, content=f"USER > Perform media type analysis on folder {os.environ.get("MEDIA_SOURCE_PATH")}")
+    #await asyncio.sleep(10) # Wait to reduce TPM
+    print(f"\nReady to process the media folder: {os.environ.get("MEDIA_SOURCE_PATH")}\n")
+
+    # Append the current log file to the chat
+    await AGENTS_GROUP_CHAT.add_chat_message(mediafolder_msg)
+    print()
+
+    try:
         print()
 
-        try:
-            print()
-
-            # Invoke a response from the agents
-            async for response in AGENTS_GROUP_CHAT.invoke():
-                if response is None or not response.name:
-                    continue
-                print(f"{response.content}")
-
-            
-        except Exception as e:
-            print(f"Error during chat invocation: {e}")
-            # If TPM rate exceeded, wait 60 secs
-            if "Rate limit is exceeded" in str(e):
-                print ("Waiting...")
-                await asyncio.sleep(60)
+        # Invoke a response from the agents
+        async for response in AGENTS_GROUP_CHAT.invoke():
+            if response is None or not response.name:
                 continue
-            else:
-                break
+            print(f"{response.content}")
+
+        
+    except Exception as e:
+        print(f"Error during chat invocation: {e}")
+        # If TPM rate exceeded, wait 60 secs
+        # if "Rate limit is exceeded" in str(e):
+        #     print ("Waiting...")
+        #     await asyncio.sleep(60)
+        #     continue
+        # else:
+        #     break
 
 # Start the app
 if __name__ == "__main__":
@@ -81,7 +77,7 @@ if __name__ == "__main__":
     load_dotenv()
 
     # create new set of ai agents
-    asyncio.run(activate_agents_and_group())     
+    AGENTS_GROUP_CHAT = asyncio.run(activate_agents_and_group())     
     
     # run media processing
     asyncio.run(main())

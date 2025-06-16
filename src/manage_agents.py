@@ -14,8 +14,9 @@ from semantic_kernel.contents.chat_message_content import ChatMessageContent
 from semantic_kernel.contents.utils.author_role import AuthorRole
 from semantic_kernel.functions.kernel_function_decorator import kernel_function
 
-from agent_plugin.DevOpsPlugin import DevopsPlugin
-from agent_plugin.LogFilePlugin import LogFilePlugin
+from agent_plugin.MetadataAnalystPlugin import MetadataAnalystPlugin
+from agent_plugin.MediaAnalystPlugin import MediaAnalystPlugin
+from agent_plugin.ContentAnalystPlugin import ContentAnalystPlugin
 
 # Replace with your actual Azure OpenAI endpoint
 agents_endpoint = "https://alvaz-sk-agents-resource.services.ai.azure.com/api/projects/alvaz-sk-agents"
@@ -24,17 +25,17 @@ agents_endpoint = "https://alvaz-sk-agents-resource.services.ai.azure.com/api/pr
 root_folder = Path(__file__).resolve().parent.parent
 print(root_folder)
 
-PHOTO_ORGANIZER = "Photo_Organizer"
-with open(f"{root_folder}/src/agent_instructions/photo_organizer.txt", "r") as file:
-    PHOTO_ORGANIZER_INSTRUCTIONS = file.read()
+MEDIA_ANALYST = "Media_Analyst"
+with open(f"{root_folder}/src/agent_instructions/media_analyst.txt", "r") as file:
+    MEDIA_ANALYST_INSTRUCTIONS = file.read()
 
-VIDEO_ORGANIZER = "Video_Organizer"
-with open(f"{root_folder}/src/agent_instructions/video_organizer.txt", "r") as file:
-    VIDEO_ORGANIZER_INSTRUCTIONS = file.read()
+METADATA_ANALYST = "Metadata_Analyst"
+with open(f"{root_folder}/src/agent_instructions/metadata_analyst.txt", "r") as file:
+    METADATA_ANALYST_INSTRUCTIONS = file.read()
 
-DEFECT_ANALYST = "Defect_Analyst"
-with open(f"{root_folder}/src/agent_instructions/defect_analyst.txt", "r") as file:
-    DEFECT_ANALYST_INSTRUCTIONS = file.read()
+CONTENT_ANALYST = "Content_Analyst"
+with open(f"{root_folder}/src/agent_instructions/content_analyst.txt", "r") as file:
+    CONTENT_ANALYST_INSTRUCTIONS = file.read()
 
 AGENTS_GROUP_CHAT = None
 
@@ -62,73 +63,100 @@ async def activate_agents_and_group():
         async for agent in client.agents.list_agents():
             current_agents.append(agent)
         
-        # If it does not exist, create the incident manager agent on the Azure AI agent service
-        if PHOTO_ORGANIZER not in [agent.name for agent in current_agents]:
-            photo_organizer_agent_definition = await client.agents.create_agent(
+        # Create or retrieve from existing pool the media analyst agent on the Azure AI agent service
+        if MEDIA_ANALYST not in [agent.name for agent in current_agents]:
+            # Create the media analyst agent on the Azure AI agent service
+            media_analyst_agent_definition = await client.agents.create_agent(
                 model=ai_agent_settings.model_deployment_name,
-                name=PHOTO_ORGANIZER,
-                instructions=PHOTO_ORGANIZER_INSTRUCTIONS
+                name=MEDIA_ANALYST,
+                instructions=MEDIA_ANALYST_INSTRUCTIONS
             )
-            print(f"Created agent: {photo_organizer_agent_definition.name} with ID: {photo_organizer_agent_definition.id}")
+            print(f"Created agent: {media_analyst_agent_definition.name} with ID: {media_analyst_agent_definition.id}")
         else:
             # If the agent already exists, retrieve its definition  
-            # Get agent_id from the agent name and model_deployment_name     
-            photo_organizer_agent_id = next(
-                (agent.id for agent in current_agents if agent.name == PHOTO_ORGANIZER), None)
+            media_analyst_agent_id = next(
+                (agent.id for agent in current_agents if agent.name == MEDIA_ANALYST), None)
             
-            photo_organizer_agent_definition = await client.agents.get_agent(
-                agent_id=photo_organizer_agent_id,
+            media_analyst_agent_definition = await client.agents.get_agent(
+                agent_id=media_analyst_agent_id,
             )
 
-            print(f"Retrieved existing agent: {photo_organizer_agent_definition.name} with ID: {photo_organizer_agent_definition.id}")
+            print(f"Retrieved existing agent: {media_analyst_agent_definition.name} with ID: {media_analyst_agent_definition.id}")
             
-        # Create a Semantic Kernel agent for the Azure AI incident manager agent
-        agent_photo_organizer = AzureAIAgent(
+        # Create a Semantic Kernel agent for the Azure AI media analyst agent
+        agent_media_analyst = AzureAIAgent(
             client=client,
-            definition=photo_organizer_agent_definition,
-            plugins=[LogFilePlugin()]
+            definition=media_analyst_agent_definition,
+            plugins=[MediaAnalystPlugin()]
         )
-        print(f"Created SK agent instance: {agent_photo_organizer.name} with ID: {agent_photo_organizer.definition.id}")
+        print(f"Created SK agent instance: {agent_media_analyst.name} with ID: {agent_media_analyst.definition.id}")
 
-        # If it does not exist, create the devops manager agent on the Azure AI agent service
-        if VIDEO_ORGANIZER not in [agent.name for agent in current_agents]:
-            # Create the devops agent on the Azure AI agent service
-            video_organizer_agent_definition = await client.agents.create_agent(
+        # Create or retrieve from existing pool the metadata analyst agent on the Azure AI agent service
+        if METADATA_ANALYST not in [agent.name for agent in current_agents]:
+            # Create the metadata analyst agent on the Azure AI agent service
+            metadata_analyst_agent_definition = await client.agents.create_agent(
                 model=ai_agent_settings.model_deployment_name,
-                name=VIDEO_ORGANIZER,
-                instructions=VIDEO_ORGANIZER_INSTRUCTIONS,
+                name=METADATA_ANALYST,
+                instructions=METADATA_ANALYST_INSTRUCTIONS,
             )
-            print(f"Created agent: {video_organizer_agent_definition.name} with ID: {video_organizer_agent_definition.id}")
+            print(f"Created agent: {metadata_analyst_agent_definition.name} with ID: {metadata_analyst_agent_definition.id}")
         else:
             # If the agent already exists, retrieve its definition  
-            # Get agent_id from the agent name and model_deployment_name     
-            video_organizer_agent_id = next(
-                (agent.id for agent in current_agents if agent.name == VIDEO_ORGANIZER), None)
+            metadata_analyst_agent_id = next(
+                (agent.id for agent in current_agents if agent.name == METADATA_ANALYST), None)
             
-            # If the agent already exists, retrieve its definition
-            video_organizer_agent_definition = await client.agents.get_agent(
-                agent_id=video_organizer_agent_id
+            metadata_analyst_agent_definition = await client.agents.get_agent(
+                agent_id=metadata_analyst_agent_id
             )
-            print(f"Retrieved existing agent: {video_organizer_agent_definition.name} with ID: {video_organizer_agent_definition.id}")
+            print(f"Retrieved existing agent: {metadata_analyst_agent_definition.name} with ID: {metadata_analyst_agent_definition.id}")
         
-        # Create a Semantic Kernel agent for the devops Azure AI agent
-        agent_video_organizer = AzureAIAgent(
+        # Create a Semantic Kernel agent for the metadata analyst Azure AI agent
+        agent_metadata_analyst = AzureAIAgent(
             client=client,
-            definition=video_organizer_agent_definition,
-            plugins=[DevopsPlugin()]
+            definition=metadata_analyst_agent_definition,
+            plugins=[MetadataAnalystPlugin()]
         )
-        print(f"Created SK agent instance: {agent_video_organizer.name} with ID: {agent_video_organizer.definition.id}")
+        print(f"Created SK agent instance: {agent_metadata_analyst.name} with ID: {agent_metadata_analyst.id}")
+
+        # Create or retrieve from existing pool the content analyst agent on the Azure AI agent service
+        if CONTENT_ANALYST not in [agent.name for agent in current_agents]:
+            # Create the content analyst agent on the Azure AI agent service
+            content_analyst_agent_definition = await client.agents.create_agent(
+                model=ai_agent_settings.model_deployment_name,
+                name=CONTENT_ANALYST,
+                instructions=CONTENT_ANALYST_INSTRUCTIONS,
+            )
+            print(f"Created agent: {content_analyst_agent_definition.name} with ID: {content_analyst_agent_definition.id}")
+        else:
+            # If the agent already exists, retrieve its definition  
+            content_analyst_agent_id = next(
+                (agent.id for agent in current_agents if agent.name == CONTENT_ANALYST), None)
+            
+            content_analyst_agent_definition = await client.agents.get_agent(
+                agent_id=content_analyst_agent_id
+            )
+            print(f"Retrieved existing agent: {content_analyst_agent_definition.name} with ID: {content_analyst_agent_definition.id}")
+        
+        # Create a Semantic Kernel agent for the content analyst Azure AI agent
+        agent_content_analyst = AzureAIAgent(
+            client=client,
+            definition=content_analyst_agent_definition,
+            plugins=[ContentAnalystPlugin()]
+        )
+        print(f"Created SK agent instance: {agent_content_analyst.name} with ID: {agent_content_analyst.definition.id}")
 
         # Add the agents to a group chat with a custom termination and selection strategy
+        global AGENTS_GROUP_CHAT
         AGENTS_GROUP_CHAT = AgentGroupChat(
-            agents=[agent_photo_organizer, agent_video_organizer],
+            agents=[agent_media_analyst, agent_metadata_analyst,agent_content_analyst],
             termination_strategy=ApprovalTerminationStrategy(
-                agents=[agent_photo_organizer], 
+                agents=[agent_media_analyst], 
                 maximum_iterations=10, 
                 automatic_reset=True
             ),
-            selection_strategy=SelectionStrategy(agents=[agent_photo_organizer,agent_video_organizer]),      
-        )             
+            selection_strategy=SelectionStrategy(agents=[agent_media_analyst,agent_metadata_analyst,agent_content_analyst]),      
+        )     
+        return AGENTS_GROUP_CHAT        
 
 async def delete_agent(agent_id):
     """Delete an agent by its ID."""
@@ -178,13 +206,18 @@ class SelectionStrategy(SequentialSelectionStrategy):
     async def select_agent(self, agents, history):
         """"Check which agent should take the next turn in the chat."""
 
-        # The Incident Manager should go after the User or the Devops Assistant
-        if (history[-1].name == VIDEO_ORGANIZER or history[-1].role == AuthorRole.USER):
-            agent_name = PHOTO_ORGANIZER
+        # The Media Analyst should go after the User or Metadata Analyst or Content Analyst
+        if (history[-1].name == METADATA_ANALYST or history[-1].name == CONTENT_ANALYST or history[-1].role == AuthorRole.USER):
+            agent_name = MEDIA_ANALYST
             return next((agent for agent in agents if agent.name == agent_name), None)
-            
-        # Otherwise it is the Devops Assistant's turn
-        return next((agent for agent in agents if agent.name == VIDEO_ORGANIZER), None)
+
+        # The Metadata Analyst should go after the Media Analyst
+        if (history[-1].name == MEDIA_ANALYST):
+            agent_name = METADATA_ANALYST
+            return next((agent for agent in agents if agent.name == agent_name), None)
+
+        # Otherwise it is the Content Analyst's turn
+        return next((agent for agent in agents if agent.name == CONTENT_ANALYST), None)
 
 # class for temination strategy
 class ApprovalTerminationStrategy(TerminationStrategy):
