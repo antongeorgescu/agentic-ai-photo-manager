@@ -158,6 +158,8 @@ YOLO is presented as a Python package, and to install it run
 
     pip install ultralytics
 
+---
+
 ## Environment variables
 The following settings must be set in .env file, to be created in the project root:
 
