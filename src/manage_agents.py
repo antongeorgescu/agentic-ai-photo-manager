@@ -223,14 +223,19 @@ class SelectionStrategy(SequentialSelectionStrategy):
     async def select_agent(self, agents, history):
         """"Check which agent should take the next turn in the chat."""
 
-        # The Media Analyst should go after the User or Metadata Analyst or Content Analyst
-        if (history[-1].name == METADATA_ANALYST or history[-1].name == CONTENT_ANALYST or history[-1].role == AuthorRole.USER):
+        # The Media Analyst should go after the User 
+        if (history[-1].role == AuthorRole.USER):
             agent_name = MEDIA_ANALYST
             return next((agent for agent in agents if agent.name == agent_name), None)
 
         # The Metadata Analyst should go after the Media Analyst
         if (history[-1].name == MEDIA_ANALYST):
             agent_name = METADATA_ANALYST
+            return next((agent for agent in agents if agent.name == agent_name), None)
+        
+        # The Content Analyst should go after the Metadata Analyst
+        if (history[-1].name == METADATA_ANALYST):
+            agent_name =CONTENT_ANALYST
             return next((agent for agent in agents if agent.name == agent_name), None)
 
         # Otherwise it is the Content Analyst's turn

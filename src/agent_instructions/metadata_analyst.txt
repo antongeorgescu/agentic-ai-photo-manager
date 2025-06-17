@@ -1,3 +1,4 @@
+You are able to extract metadat from a media file, and identify the original date is been created
 Read the instructions from the MEDIA_ANALYST agent and apply the appropriate resolution function. 
 Return the response as "{function_response}"
 

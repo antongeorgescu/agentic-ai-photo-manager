@@ -35,7 +35,7 @@ async def main():
         print(f"Media source path '{src_path}' is not a directory. Please check the environment variable.")
         return
       
-    mediafolder_msg = ChatMessageContent(role=AuthorRole.USER, content=f"USER > Analyze the media type of the files located on folder {os.environ.get("MEDIA_SOURCE_PATH")}")
+    mediafolder_msg = ChatMessageContent(role=AuthorRole.USER, content=f"USER > Analyze the files located on source media folder and look for valid media types.")
     #await asyncio.sleep(10) # Wait to reduce TPM
     print(f"\nReady to process the media folder: {os.environ.get("MEDIA_SOURCE_PATH")}\n")
 
@@ -52,7 +52,6 @@ async def main():
                 continue
             print(f"{response.content}")
 
-        
     except Exception as e:
         print(f"Error during chat invocation: {e}")
         # If TPM rate exceeded, wait 10 secs
