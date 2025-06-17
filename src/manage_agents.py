@@ -5,8 +5,6 @@ import asyncio
 from pathlib import Path
 import os
 
-from azure.identity.aio import DefaultAzureCredential
-
 from semantic_kernel.agents import AgentGroupChat
 from semantic_kernel.agents import AzureAIAgent, AzureAIAgentSettings
 from semantic_kernel.agents.strategies import TerminationStrategy, SequentialSelectionStrategy
