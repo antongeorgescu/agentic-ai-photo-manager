@@ -37,7 +37,7 @@ class MediaAnalystPlugin:
             return processed_count, nonmedia_count, defective_count
             
         
-    @kernel_function(description="Access and analyze the given directory for valid media types move the exceptions in another folder")
+    @kernel_function(description="Access and analyze the given directory for valid media types and move the files that raise exceptions in another folder")
     def analyze_media_types(self) -> str:
         try:
             # Source directory with photos

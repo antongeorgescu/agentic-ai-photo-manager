@@ -44,7 +44,7 @@ class ContentAnalystPlugin:
 
         return total_people_pics, total_other_pics
 
-    @kernel_function(description="Accesses the given file path string and returns the file contents as a string")
+    @kernel_function(description="Access and analyze the files of the source media directory, run objects identification and then create a log file with the results.")
     def media_content_analysis(self) -> str:
         try:
             # Source directory with photos
@@ -55,7 +55,11 @@ class ContentAnalystPlugin:
 
             total_people_pics, total_other_pics = self.__process_folder(source_dir,)
             print(f"Media files content analysis completed successfully: {total_people_pics} files contain people, {total_other_pics} files contain other content.")
-            
+            return f"Media files content analysis completed successfully: {total_people_pics} files contain people, {total_other_pics} files contain other content."
+        except FileNotFoundError as e:  
+            print(f"ERROR: The specified directory does not exist: {str(e)}")
+            return f"ERROR: The specified directory does not exist: {str(e)}"
         except Exception as e:
-            print(f"ERROR:An error occurred: {str(e)}")
+            print(f"ERROR:An error occurred: {str(e)}") 
+            return f"ERROR: An error occurred: {str(e)}"
     

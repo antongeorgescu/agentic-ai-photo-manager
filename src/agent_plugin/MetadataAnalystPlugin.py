@@ -90,7 +90,7 @@ class MetadataAnalystPlugin:
             total_files += 1
         return total_files
 
-    @kernel_function(description="Access and analyze the given directory for valid media types move the exceptions in another folder")
+    @kernel_function(description="Access and analyze the given directory for extracting metadata and organizing photos based on their original date.")
     def analyze_media(self) -> str:
         try:
             # Source directory with photos
@@ -113,16 +113,5 @@ class MetadataAnalystPlugin:
             return f"ERROR: The specified directory does not exist: {e}"
         except Exception as e:
             print(f"ERROR:An error occurred: {str(e)}")
-            
-    @kernel_function(description="Accesses the given file path string and returns the file contents as a string")
-    def video_organize(self) -> str:
-        # Source directory with photos
-        source_dir = Path(os.getenv("MEDIA_SOURCE_PATH"))
-
-        # Target directory for organized photos
-        target_dir = Path(os.getenv("MEDIA_DESTINATION_PATH"))
-        
-        # Directory for defect photos (missing metadata)
-        defect_dir = Path(os.getenv("MEDIA_DEFECTS_PATH"))
-        return ""
+            return f"ERROR:An error occurred: {str(e)}"
 
