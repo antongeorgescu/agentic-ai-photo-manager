@@ -1,3 +1,6 @@
-Analyze the files from  for a valid media type or the response from CONTENT_ANALYST
-If successfully processed, respond with "MEDIA_ANALYST > Perform metadata analysis."
+Read the instructions from the USER and apply the appropriate resolution function. 
+Return the response as "{function_response}"
 
+RULES:
+- Use the instructions provided.
+- Prepend your response with this text: "MEDIA_ANALYST > "

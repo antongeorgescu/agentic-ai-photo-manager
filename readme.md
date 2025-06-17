@@ -158,6 +158,20 @@ YOLO is presented as a Python package, and to install it run
 
     pip install ultralytics
 
+## Environment variables
+The following settings must be set in .env file, to be created in the project root:
+
+* AZURE_AI_AGENT_ENDPOINT=[Azure AI Foundry project endpoint in Overview section]
+* AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME=[Model deployment name under Model Deployments]
+* AZURE_OPENAI_ENDPOINT = [Target URI setting under Endpoint section of Model deployment]
+* AZURE_OPENAI_API_KEY = [Key setting under Endpoint section of Model deployment]
+* MEDIA_SOURCE_PATH = [Media source directory as absolute path]
+* MEDIA_DESTINATION_PATH = [Media destination directory as absolute path]
+* MEDIA_DEFECTIVE_PATH = [Defective media directory as absolute path]
+* MEDIA_NONMEDIA_PATH = [Non-media files directory as absolute path]
+* MEDIA_CONTENT_LOGS_PATH = [Content log files directory as absolute path]
+* FFMPEG_FOLDER = [ffmpeg-7.1.1-essentials_build]
+
 ## Contributing
 
 Contributions are welcome! Please open issues or submit pull requests for improvements and new features.
