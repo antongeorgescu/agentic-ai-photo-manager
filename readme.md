@@ -50,34 +50,49 @@ pip install -r requirements.txt
 
 2. **Configure your photo directory and agent tasks as needed in the source files.**
 
-### Example: Agent Collaboration
-
-The following code sample tries to make a point and is not related to existing implementation
+### Example: Agent Collaboration in a Sequential Orchestration
 
 ```python
-from semantic_kernel.functions.kernel_function_decorator import kernel_function
 
-class Agent:
-    def __init__(self, name, task):
-        self.name = name
-        self.task = task
+    def get_agents() -> list[Agent]:
+        """Return a list of agents that will participate in the sequential orchestration.
 
-    @kernel_function
-    def respond(self, message: str) -> str:
-        return f"{self.name} ({self.task}) received: {message}"
+        Feel free to add or remove agents.
+        """
+        ...
+        # The order of the agents in the list will be the order in which they are executed
+        return [media_validate_agent, metadata_analyst_agent, objects_analyst_agent]
 
-agent1 = Agent("Agent1", "Describe photo")
-agent2 = Agent("Agent2", "Suggest tags")
-agent3 = Agent("Agent3", "Summarize content")
+    def agent_response_callback(message: ChatMessageContent) -> None:
+        """Observer function to print the messages from the agents."""
+        print(f"# {message.name}\n{message.content}")
 
-message = "Start"
-for _ in range(2):
-    message = agent1.respond(message)
-    print(message)
-    message = agent2.respond(message)
-    print(message)
-    message = agent3.respond(message)
-    print(message)
+    async def main(user_query: str) -> None:
+    """Main function to run the agents."""
+    # 1. Create a sequential orchestration with multiple agents and an agent
+    #    response callback to observe the output from each agent.
+    agents = get_agents()
+    sequential_orchestration = SequentialOrchestration(
+        members=agents,
+        agent_response_callback=agent_response_callback,
+    )
+
+    # 2. Create a runtime and start it
+    runtime = InProcessRuntime()
+    runtime.start()
+
+    # 3. Invoke the orchestration with a task and the runtime
+    orchestration_result = await sequential_orchestration.invoke(
+        task=user_query,
+        runtime=runtime,
+    )
+
+    # 4. Wait for the results
+    value = await orchestration_result.get(timeout=300)
+    print(f"***** Final Result *****\n{value}")
+
+    # 5. Stop the runtime when idle
+    await runtime.stop_when_idle()
 ```
 
 ### Media Type Detection Example
