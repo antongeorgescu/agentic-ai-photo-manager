@@ -66,6 +66,21 @@ dmypy.json
 ffmpeg-7.1.1-essentials_build/
 playground/
 sample_media/
+backup_media/
 runs/
 sample_logs/
 logs/
+
+# Ignore specific files
+DevopsPlugin.py
+LogFilePlugin.py
+manage_agents_logs.py
+process_logs.py
+ApprovalStrategyLogs.py
+SelectionStrategyLogs.py
+devops_assistant.txt
+incident_manager.txt
+
+# Ignore specific directories
+logs/
+sample_logs/

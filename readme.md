@@ -8,15 +8,19 @@ Agentic AI Photo Manager is a Python-based project that leverages multi-agent co
 - **Media Type Detection:** Uses `python-magic` to identify and process only media files (images, audio, video).
 - **Image Analysis:** Detects people in images and organizes them into dedicated folders.
 - **Extensible Architecture:** Easily add new agents or tasks using the Semantic Kernel framework.
+- **Agent Sequential Orchestration:** Is a pattern used by multi-agent with Microsoft Semantic Kernel—where multiple AI agents are arranged in a sequence, and each agent performs a specific task, passing its output to the next agent in line. 
+
 
 ## Folder Structure
 
 ```
 Agentic-AI-Photo-Manager/
 │
-├── agent_collaborate.py         # Multi-agent chat logic
+├── process_media.py             # Multi-agent chat logic in sequential orchestration
 ├── agent_plugin/
-│   └── ContentAnalystPlugin.py  # Image analysis and organization
+│   └── ContentAnalystPlugin.py  # Media analysis with object identification
+│   └── MediaAnalystPlugin.py    # Media analysis with media type validation
+│   └── MetadataAnalystPlugin.py # Media analysis with metadata extraction
 ├── requirements.txt             # Python dependencies
 ├── README.md                    # Project documentation
 └── ...                          # Other supporting files
@@ -41,12 +45,14 @@ pip install -r requirements.txt
 1. **Run the main agent collaboration script:**
 
     ```sh
-    python agent_collaborate.py
+    python process_media.py
     ```
 
 2. **Configure your photo directory and agent tasks as needed in the source files.**
 
 ### Example: Agent Collaboration
+
+The following code sample tries to make a point and is not related to existing implementation
 
 ```python
 from semantic_kernel.functions.kernel_function_decorator import kernel_function

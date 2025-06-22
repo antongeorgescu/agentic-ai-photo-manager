@@ -44,7 +44,7 @@ class MetadataAnalystPlugin:
                 if exif_data:
                     original_date = self.__get_original_date(exif_data)
                     if original_date:
-                        self.update_file_timestamp(file_path, original_date)
+                        self.__update_file_timestamp(file_path, original_date)
                         # print(f"Updated timestamps for {filename} to {original_date}")
                     else:
                         print(f"No DateTimeOriginal found for {filename}")
@@ -59,6 +59,11 @@ class MetadataAnalystPlugin:
 
     def __organize_photos(self,source_path,target_path, unprocessed_files):
         total_files = 0
+
+        # Convert source_path to Path object if it's a string
+        if isinstance(source_path, str):
+            source_path = Path(source_path)
+        
         # Get all files recursively, excluding directories
         files = [f for f in source_path.rglob('*') if f.is_file()]
         
@@ -90,28 +95,30 @@ class MetadataAnalystPlugin:
             total_files += 1
         return total_files
 
-    @kernel_function(description="Access and analyze the given directory for extracting metadata and organizing photos based on their original date.")
-    def analyze_media(self) -> str:
+    @kernel_function(description="Access and analyze the given directory by extracting files metadata and organizing photos based on their original date.")
+    def analyze_media(self, source_dir:str) -> str:
         try:
             # Source directory with photos
-            source_dir = Path(os.getenv("MEDIA_SOURCE_PATH"))
+            # source_dir = Path(os.getenv("MEDIA_SOURCE_PATH"))
 
-            # Target directory for organized photos
-            target_dir = Path(os.getenv("MEDIA_DESTINATION_PATH"))
-
-            # Directory for defect photos (missing metadata)
-            defect_dir = Path(os.getenv("MEDIA_DEFECTS_PATH"))
-
-            defective_files = self.__process_folder(source_dir, defect_dir)
+            # Target directory for organized photos - create it if it does not exist
+            sample_dir = Path(source_dir).parent
+            if not sample_dir:
+                raise FileNotFoundError("Parent directory does not exist.")
+            target_dir  = Path(sample_dir, "album")           
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir, exist_ok=True)
+            
+            defective_files = self.__process_folder(source_dir)
             print("Photo attributes completed successfully!")
             
             files_processed = self.__organize_photos(source_dir, target_dir, defective_files)
             print(f"Photo organization completed successfully: {files_processed} files processed.")
-            return f"Photo organization completed successfully: {files_processed} files processed."
+            result = f"Run objects identification and create a log file with the results applicable to the files stored in {{album_dir}} = '{target_dir}' "
+            return result
         except FileNotFoundError as e:  
             print(f"ERROR: The specified directory does not exist: {e}")
             return f"ERROR: The specified directory does not exist: {e}"
         except Exception as e:
             print(f"ERROR:An error occurred: {str(e)}")
             return f"ERROR:An error occurred: {str(e)}"
-
