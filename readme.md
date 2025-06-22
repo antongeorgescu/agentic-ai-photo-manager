@@ -100,32 +100,33 @@ from ultralytics import YOLO
 
 model = YOLO("yolov8n.pt")  # Nano version
 
-def __process_folder(self,album_dir, logfile_dir):
-    ...
-    image_path = filename
-                    
-    results = model(image_path, show=True, save=True, save_txt=True)
-    includes_people = False
-    for result in results:
-        if result.boxes:
-            for box in result.boxes:
-                if box.cls[0] == 0:  # Class ID for 'person'
-                    includes_people = True
-                    break
+def process_folder(album_dir):
+    # Process each file in the album folder
+    file_paths = []
+    for root, _, files in os.walk(album_dir):
+        for file in files:
+            file_paths.append(os.path.join(root, file))
     
-    if includes_people:
-        # If the image includes people, save the entry to log file with explanation
-        log_entry = f"{os.path.basename(filename)}:includes people" + "\n"
-        with open(logfile_path, "a", encoding="utf-8") as log_file:
-            log_file.write(log_entry) 
-        total_people_pics += 1
-    else:
-        # If the image includes other, save the entry to log file with explanation
-        log_entry = f"{os.path.basename(filename)}:includes other than people" + "\n"
-        with open(logfile_path, "a", encoding="utf-8") as log_file:
-            log_file.write(log_entry)
-        total_other_pics += 1
-    ...
+    aggregated_log = ''
+    for filename in file_paths:
+        if filename.lower().endswith(('.mov', '.mp4')):
+            print(f"Skipping video file: {filename}")
+        elif filename.lower().endswith(('.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.gif')):
+            image_path = filename
+            
+            obj_detected = []
+            results = model(image_path, show=True, save=True, save_txt=True)
+            for box in results[0].boxes:
+                class_idx = int(box.cls[0].item())
+                class_name = results[0].names[class_idx]  # Get value from dict based on index
+                obj_detected.append(class_name)
+            if len(obj_detected) > 0:
+                # log_object = f"{os.path.basename(filename)} includes: {', '.join(obj_detected)}\n"
+                log_object = f"{image_path} includes: {', '.join(obj_detected)}\n"
+                aggregated_log += log_object
+    print("******** Object Detection Results ********\n")
+    print(aggregated_log)
+    return
 ```
 
 ## Handling mltimedia files' attributes with ffmpeg

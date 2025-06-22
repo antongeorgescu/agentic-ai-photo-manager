@@ -23,8 +23,8 @@ class ContentAnalystPlugin:
             file.write(row + "\n")
 
     def __process_folder(self,album_dir, logfile_dir):
-        total_people_pics = 0
-        total_other_pics = 0
+        total_pics = 0
+        total_detected = 0
 
         """
         Creates a text file with today's date in DDMMYYYY.txt format in the specified directory.
@@ -46,36 +46,29 @@ class ContentAnalystPlugin:
             for file in files:
                 file_paths.append(os.path.join(root, file))
         
+        aggregated_log = '******** Object Detection Results ********\n'
         for filename in file_paths:
             if filename.lower().endswith(('.mov', '.mp4')):
                 print(f"Skipping video file: {filename}")
-            else:
-                if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.gif')):
-                    image_path = filename
-                    
-                    results = model(image_path, show=True, save=True, save_txt=True)
-                    includes_people = False
-                    for result in results:
-                        if result.boxes:
-                            for box in result.boxes:
-                                if box.cls[0] == 0:  # Class ID for 'person'
-                                    includes_people = True
-                                    break
-                    
-                    if includes_people:
-                        # If the image includes people, save the entry to log file with explanation
-                        log_entry = f"{os.path.basename(filename)}:includes people" + "\n"
-                        with open(logfile_path, "a", encoding="utf-8") as log_file:
-                            log_file.write(log_entry) 
-                        total_people_pics += 1
-                    else:
-                        # If the image includes other, save the entry to log file with explanation
-                        log_entry = f"{os.path.basename(filename)}:includes other than people" + "\n"
-                        with open(logfile_path, "a", encoding="utf-8") as log_file:
-                            log_file.write(log_entry)
-                        total_other_pics += 1
-
-        return total_people_pics, total_other_pics
+            elif filename.lower().endswith(('.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.gif')):
+                total_pics += 1
+                image_path = filename
+                
+                obj_detected = []
+                results = model(image_path, show=True, save=True, save_txt=True)
+                for box in results[0].boxes:
+                    class_idx = int(box.cls[0].item())
+                    class_name = results[0].names[class_idx]  # Get value from dict based on index
+                    obj_detected.append(class_name)
+                if len(obj_detected) > 0:
+                    total_detected += 1
+                    # log_object = f"{os.path.basename(filename)} includes: {', '.join(obj_detected)}\n"
+                    log_object = f"{'/'.join(os.path.normpath(image_path).split(os.sep)[-3:])} includes: {', '.join(obj_detected)}\n"
+                    aggregated_log += log_object
+        with open(logfile_path, "a", encoding="utf-8") as log_file:
+            log_file.write(aggregated_log) 
+        
+        return total_pics, total_detected
 
     @kernel_function(description="Run objects identification and then create a log file with the results applicable to the files stored in {album_dir}.")
     def media_content_analysis(self, album_dir:str) -> str:
@@ -94,9 +87,9 @@ class ContentAnalystPlugin:
             if not os.path.exists(logfiles_dir):
                 os.makedirs(logfiles_dir, exist_ok=True)
 
-            total_people_pics, total_other_pics = self.__process_folder(album_dir,logfiles_dir)
-            print(f"Media files content analysis completed successfully: {total_people_pics} files contain people, {total_other_pics} files contain other content.")
-            return f"Media files content analysis completed successfully: {total_people_pics} files contain people, {total_other_pics} files contain other content."
+            total_pics, total_detected = self.__process_folder(album_dir,logfiles_dir)
+            print(f"Media files content analysis completed successfully: from {total_pics} images processed, {total_detected} contain detected objects.")
+            return f"Media files content analysis completed successfully: from {total_pics} images processed, {total_detected} contain detected objects."
         except FileNotFoundError as e:  
             print(f"ERROR: The specified directory does not exist: {str(e)}")
             return f"ERROR: The specified directory does not exist: {str(e)}"
