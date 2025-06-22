@@ -52,7 +52,7 @@ class ContentAnalystPlugin:
             else:
                 if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.gif')):
                     image_path = filename
-
+                    
                     results = model(image_path, show=True, save=True, save_txt=True)
                     includes_people = False
                     for result in results:

@@ -95,21 +95,37 @@ def is_media_file(filepath):
 The system can log file names and detected objects to a text file for audit and review.
 
 ```python
-import os
-import ast
+...
+from ultralytics import YOLO
 
-def log_file_objects(file_path, log_path):
-    objects = []
-    with open(file_path, "r", encoding="utf-8") as f:
-        tree = ast.parse(f.read(), filename=file_path)
-        for node in ast.iter_child_nodes(tree):
-            if isinstance(node, ast.ClassDef):
-                objects.append(f"class {node.name}")
-            elif isinstance(node, ast.FunctionDef):
-                objects.append(f"def {node.name}()")
-    log_entry = f"{os.path.basename(file_path)}:\n" + "\n".join(objects) + "\n\n"
-    with open(log_path, "a", encoding="utf-8") as log_file:
-        log_file.write(log_entry)
+model = YOLO("yolov8n.pt")  # Nano version
+
+def __process_folder(self,album_dir, logfile_dir):
+    ...
+    image_path = filename
+                    
+    results = model(image_path, show=True, save=True, save_txt=True)
+    includes_people = False
+    for result in results:
+        if result.boxes:
+            for box in result.boxes:
+                if box.cls[0] == 0:  # Class ID for 'person'
+                    includes_people = True
+                    break
+    
+    if includes_people:
+        # If the image includes people, save the entry to log file with explanation
+        log_entry = f"{os.path.basename(filename)}:includes people" + "\n"
+        with open(logfile_path, "a", encoding="utf-8") as log_file:
+            log_file.write(log_entry) 
+        total_people_pics += 1
+    else:
+        # If the image includes other, save the entry to log file with explanation
+        log_entry = f"{os.path.basename(filename)}:includes other than people" + "\n"
+        with open(logfile_path, "a", encoding="utf-8") as log_file:
+            log_file.write(log_entry)
+        total_other_pics += 1
+    ...
 ```
 
 ## Handling mltimedia files' attributes with ffmpeg
@@ -169,15 +185,11 @@ YOLO is presented as a Python package, and to install it run
 ## Environment variables
 The following settings must be set in .env file, to be created in the project root:
 
-* AZURE_AI_AGENT_ENDPOINT=[Azure AI Foundry project endpoint in Overview section]
-* AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME=[Model deployment name under Model Deployments]
+* AZURE_OPENAI_DEPLOYMENT_NAME=[Model deployment name under Model Deployments]
 * AZURE_OPENAI_ENDPOINT = [Target URI setting under Endpoint section of Model deployment]
 * AZURE_OPENAI_API_KEY = [Key setting under Endpoint section of Model deployment]
+* AZURE_OPENAI_API_VERSION = [Key setting specifying version of API to use]
 * MEDIA_SOURCE_PATH = [Media source directory as absolute path]
-* MEDIA_DESTINATION_PATH = [Media destination directory as absolute path]
-* MEDIA_DEFECTIVE_PATH = [Defective media directory as absolute path]
-* MEDIA_NONMEDIA_PATH = [Non-media files directory as absolute path]
-* MEDIA_CONTENT_LOGS_PATH = [Content log files directory as absolute path]
 * FFMPEG_FOLDER = [ffmpeg-7.1.1-essentials_build]
 
 ## Contributing
