@@ -170,14 +170,6 @@ class AIContentAnalystPlugin:
             detail_level = "low"
             # detail_level = "high"
 
-            # sorted_folder_path = self.__sort_files_numerically(album_dir)
-    
-            # images = []
-            # for filename in sorted_folder_path:
-            #     if filename.upper().endswith(".JPG") or filename.upper().endswith(".JPEG") or filename.upper().endswith(".PNG"):
-            #         image_path = os.path.join(folder_path, filename)
-            #         images.append(image_path)
-
             # Process each file in the media directory
             images = []
             for root, _, files in os.walk(album_dir):
