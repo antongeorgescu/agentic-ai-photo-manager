@@ -84,3 +84,4 @@ incident_manager.txt
 # Ignore specific directories
 logs/
 sample_logs/
+object_detection_logs/

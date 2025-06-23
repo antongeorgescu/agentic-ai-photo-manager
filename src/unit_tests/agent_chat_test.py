@@ -16,7 +16,7 @@ from semantic_kernel.agents import AzureAIAgent, AzureAIAgentSettings
 
 from agent_plugin.MetadataAnalystPlugin import MetadataAnalystPlugin
 from agent_plugin.MediaAnalystPlugin import MediaAnalystPlugin
-from agent_plugin.ContentAnalystPlugin import ContentAnalystPlugin
+from agent_plugin.YoloContentAnalystPlugin import YoloContentAnalystPlugin
 
 # Replace with your actual Azure OpenAI endpoint
 agents_endpoint = "https://alvaz-sk-agents-resource.services.ai.azure.com/api/projects/alvaz-sk-agents"
@@ -97,7 +97,7 @@ async def get_agents():
         agent_content_analyst = AzureAIAgent(
             client=client,
             definition=content_analyst_agent_definition,
-            plugins=[ContentAnalystPlugin()]
+            plugins=[YoloContentAnalystPlugin()]
         )
         print(f"Created SK agent instance: {agent_content_analyst.name} with ID: {agent_content_analyst.definition.id}")
         return agent_media_analyst, agent_metadata_analyst, agent_content_analyst

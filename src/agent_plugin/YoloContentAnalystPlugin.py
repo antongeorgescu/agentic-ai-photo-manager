@@ -8,7 +8,7 @@ from semantic_kernel.functions.kernel_function_decorator import kernel_function
 model = YOLO("yolov8n.pt")  # Nano version
 
 # class for Media Analyst functions
-class ContentAnalystPlugin:
+class YoloContentAnalystPlugin:
     """A plugin that reads and analyzes media files."""
 
     def __write_row_to_text_file(self,file_path: str, row: str) -> None:
@@ -89,7 +89,8 @@ class ContentAnalystPlugin:
 
             total_pics, total_detected = self.__process_folder(album_dir,logfiles_dir)
             print(f"Media files content analysis completed successfully: from {total_pics} images processed, {total_detected} contain detected objects.")
-            return f"Media files content analysis completed successfully: from {total_pics} images processed, {total_detected} contain detected objects."
+            result = f"Run OpenAI content and tags extraction and create a log file with the results applicable to the files stored in {{album_dir}} = '{target_dir}' "
+            return result
         except FileNotFoundError as e:  
             print(f"ERROR: The specified directory does not exist: {str(e)}")
             return f"ERROR: The specified directory does not exist: {str(e)}"

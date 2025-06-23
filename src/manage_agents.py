@@ -14,7 +14,7 @@ from semantic_kernel.functions.kernel_function_decorator import kernel_function
 
 from agent_plugin.MetadataAnalystPlugin import MetadataAnalystPlugin
 from agent_plugin.MediaAnalystPlugin import MediaAnalystPlugin
-from agent_plugin.ContentAnalystPlugin import ContentAnalystPlugin
+from agent_plugin.YoloContentAnalystPlugin import YoloContentAnalystPlugin
 
 # Replace with your actual Azure OpenAI endpoint
 agents_endpoint = "https://alvaz-sk-agents-resource.services.ai.azure.com/api/projects/alvaz-sk-agents"
@@ -36,7 +36,15 @@ def init_agents():
     with open(f"{root_folder}/src/agent_instructions/content_analyst.txt", "r") as file:
         CONTENT_ANALYST_INSTRUCTIONS = file.read()
 
-    return [(MEDIA_ANALYST,MEDIA_ANALYST_INSTRUCTIONS),(METADATA_ANALYST,METADATA_ANALYST_INSTRUCTIONS),(CONTENT_ANALYST,CONTENT_ANALYST_INSTRUCTIONS)]
+    AI_CONTENT_ANALYST = "AIContentAnalystAgent"
+    with open(f"{root_folder}/src/agent_instructions/ai_content_analyst.txt", "r") as file:
+        AI_CONTENT_ANALYST_INSTRUCTIONS = file.read()
+
+    return [
+        (MEDIA_ANALYST,MEDIA_ANALYST_INSTRUCTIONS),
+        (METADATA_ANALYST,METADATA_ANALYST_INSTRUCTIONS),
+        (CONTENT_ANALYST,CONTENT_ANALYST_INSTRUCTIONS),
+        (AI_CONTENT_ANALYST,AI_CONTENT_ANALYST_INSTRUCTIONS)]
 
 async def delete_agent(agent_id):
     """Delete an agent by its ID."""

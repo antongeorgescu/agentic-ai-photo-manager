@@ -12,7 +12,8 @@ from semantic_kernel.contents import ChatMessageContent
 
 from agent_plugin.MetadataAnalystPlugin import MetadataAnalystPlugin
 from agent_plugin.MediaAnalystPlugin import MediaAnalystPlugin
-from agent_plugin.ContentAnalystPlugin import ContentAnalystPlugin
+from agent_plugin.YoloContentAnalystPlugin import YoloContentAnalystPlugin
+from agent_plugin.AIContentAnalystPlugin import AIContentAnalystPlugin
 
 from manage_agents import init_agents
 
@@ -59,11 +60,22 @@ def get_agents() -> list[Agent]:
             endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
             api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
             api_version=os.environ.get("AZURE_OPENAI_API_VERSION")),
-        plugins=[ContentAnalystPlugin()]
+        plugins=[YoloContentAnalystPlugin()]
+    )
+    aicontent_analyst_agent = ChatCompletionAgent(
+        name=AI_CONTENT_ANALYST,
+        instructions=AI_CONTENT_ANALYST_INSTRUCTIONS,
+        service=AzureChatCompletion(service_id="alvaz-openai",
+            deployment_name=os.environ.get("AZURE_OPENAI_DEPLOYMENT_NAME"),  # Your Azure deployment name
+            endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
+            api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
+            api_version=os.environ.get("AZURE_OPENAI_API_VERSION")),
+        plugins=[AIContentAnalystPlugin()]
     )
 
+
     # The order of the agents in the list will be the order in which they are executed
-    return [media_validate_agent, metadata_analyst_agent, objects_analyst_agent]
+    return [media_validate_agent, metadata_analyst_agent, objects_analyst_agent,aicontent_analyst_agent]
 
 
 def agent_response_callback(message: ChatMessageContent) -> None:
@@ -136,6 +148,7 @@ if __name__ == "__main__":
     MEDIA_ANALYST, MEDIA_ANALYST_INSTRUCTIONS = agents_info_list[0]
     METADATA_ANALYST, METADATA_ANALYST_INSTRUCTIONS = agents_info_list[1]
     CONTENT_ANALYST, OBJECTS_ANALYST_INSTRUCTIONS = agents_info_list[2]
+    AI_CONTENT_ANALYST, AI_CONTENT_ANALYST_INSTRUCTIONS = agents_info_list[3]
 
     USER_QUERY = "Create a photo album, keeping both photos and videos organized by year and month, from a set of media files stored in the sample_media folder.\n"
     USER_QUERY += f"The source directory for media files is {os.environ.get('MEDIA_SOURCE_PATH')}."
