@@ -111,7 +111,7 @@ class AIContentAnalystPlugin:
             
             summary, tags = self.__extract_summary(client_ai,response, prompt_summary)
             
-            log_entry = f"\n===== Image: {os.path.basename(image)} =============================================="
+            log_entry = f"\n===== Image: {os.path.normpath(image).split(os.sep)[-3:]} =============================================="
             log_entry += f"\nTags:"
             log_entry += f"\n{tags}"
             log_entry += f"\n"
@@ -147,7 +147,6 @@ class AIContentAnalystPlugin:
                 api_key=os.getenv("AZURE_OPENAI_API_KEY"),
                 api_version=os.getenv("AZURE_OPENAI_API_VERSION")
             )
-
             
             sample_dir = Path(album_dir).parent
             if not sample_dir:
@@ -171,7 +170,21 @@ class AIContentAnalystPlugin:
             detail_level = "low"
             # detail_level = "high"
 
-            self.__process_images(prompt_img_content,detail_level,album_dir,logfiles_dir,client,prompt_text_summary)
+            # sorted_folder_path = self.__sort_files_numerically(album_dir)
+    
+            # images = []
+            # for filename in sorted_folder_path:
+            #     if filename.upper().endswith(".JPG") or filename.upper().endswith(".JPEG") or filename.upper().endswith(".PNG"):
+            #         image_path = os.path.join(folder_path, filename)
+            #         images.append(image_path)
+
+            # Process each file in the media directory
+            images = []
+            for root, _, files in os.walk(album_dir):
+                for file in files:
+                    images.append(os.path.join(root, file))
+            self.__process_images(prompt_img_content,detail_level,images,logfiles_dir,client,prompt_text_summary)
+            
             print(f"Advanced AI media files content analysis completed successfully.")
             return f"Advanced AI media files content analysis completed successfully."
         except FileNotFoundError as e:  

@@ -85,3 +85,4 @@ incident_manager.txt
 logs/
 sample_logs/
 object_detection_logs/
+unit_tests/
