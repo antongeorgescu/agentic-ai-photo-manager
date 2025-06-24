@@ -7,7 +7,7 @@ from semantic_kernel.functions.kernel_function_decorator import kernel_function
 
 model = YOLO("yolov8n.pt")  # Nano version
 
-# class for Media Analyst functions
+# class for YoloContentAnalyst functions
 class YoloContentAnalystPlugin:
     """A plugin that reads and analyzes media files."""
 

@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import os
 
-# class for Metadata Analyst functions
+# class for MetadataAnalyst functions
 class MetadataAnalystPlugin:
     """A plugin that reads a media file and parses the metadata."""
     def __get_exif_data(self,image_path):

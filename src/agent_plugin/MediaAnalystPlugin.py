@@ -4,7 +4,7 @@ import os
 import shutil
 import magic
 
-# class for Media Analyst functions
+# class for MediaAnalys functions
 class MediaAnalystPlugin:
     """A plugin that reads and analyzes media files."""
     def __is_media_file(self,file_path):

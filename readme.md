@@ -6,24 +6,30 @@ Agentic AI Photo Manager is a Python-based project that leverages multi-agent co
 
 - **Multi-Agent Collaboration:** Three AI agents, each responsible for a unique task (e.g., describing photos, suggesting tags, summarizing content).
 - **Media Type Detection:** Uses `python-magic` to identify and process only media files (images, audio, video).
-- **Image Analysis:** Detects people in images and organizes them into dedicated folders.
+- **Image Analysis:** Detects people in images and organizes them into dedicated folders.It uses two models:
+  - Yolo - open-source deep learning model
+  - OpenAI - part of Azure cloud
 - **Extensible Architecture:** Easily add new agents or tasks using the Semantic Kernel framework.
 - **Agent Sequential Orchestration:** Is a pattern used by multi-agent with Microsoft Semantic Kernel—where multiple AI agents are arranged in a sequence, and each agent performs a specific task, passing its output to the next agent in line. 
 
 
 ## Folder Structure
 
+The following project structure lists out the 4 agents running in a sequential orchestration
+
 ```
 Agentic-AI-Photo-Manager/
 │
-├── process_media.py             # Multi-agent chat logic in sequential orchestration
+├── process_media.py                    # Multi-agent chat logic in sequential orchestration
 ├── agent_plugin/
-│   └── ContentAnalystPlugin.py  # Media analysis with object identification
-│   └── MediaAnalystPlugin.py    # Media analysis with media type validation
-│   └── MetadataAnalystPlugin.py # Media analysis with metadata extraction
-├── requirements.txt             # Python dependencies
-├── README.md                    # Project documentation
-└── ...                          # Other supporting files
+│   └── MediaAnalystPlugin.py           # Media analysis executing media type validation
+│   └── MetadataAnalystPlugin.py        # Metadata analysis executing metadata extraction and media organization
+│   └── YoloContentAnalystPlugin.py     # Image content analyst executing simple object identification
+│   └── AIContentAnalystPlugin.py       # Image content analyst executing content description and tags listing
+├── manage_agents.py                    # Agent management module
+├── requirements.txt                    # Python dependencies
+├── README.md                           # Project documentation
+└── ...                                 # Other supporting files
 ```
 
 ## Getting Started
