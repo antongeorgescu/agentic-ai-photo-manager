@@ -12,8 +12,9 @@ from semantic_kernel.contents import ChatMessageContent
 
 from agent_plugin.MetadataAnalystPlugin import MetadataAnalystPlugin
 from agent_plugin.MediaAnalystPlugin import MediaAnalystPlugin
-from agent_plugin.YoloContentAnalystPlugin import YoloContentAnalystPlugin
-from agent_plugin.AIContentAnalystPlugin import AIContentAnalystPlugin
+from agent_plugin.ContentAnalystPlugin import ContentAnalystPlugin
+from agent_plugin.ExpertContentAnalystPlugin import ExpertContentAnalystPlugin
+from agent_plugin.DispatcherPlugin import DispatcherPlugin
 
 from manage_agents import init_agents
 
@@ -28,13 +29,19 @@ results.
 """
 
 def get_agents() -> list[Agent]:
-    """Return a list of agents that will participate in the sequential orchestration.
+    """Return a list of agents that will participate in the sequential orchestration."""
+    
+    agents_info_list = init_agents()
 
-    Feel free to add or remove agents.
-    """
+    Media_Analyst_ID, Media_Analyst_Instructions = agents_info_list["media_analyst"]
+    Metadata_Analyst_ID, Metadata_Analyst_Instructions = agents_info_list["metadata_analyst"]
+    Content_Analyst_ID, Content_Analyst_Instructions = agents_info_list["content_analyst"]
+    Expert_Content_Analyst_ID, Expert_Content_Analyst_Instructions = agents_info_list["expert_content_analyst"]
+    Dispatcher_ID, Dispatcher_Instructions = agents_info_list["dispatcher"]
+
     media_validate_agent = ChatCompletionAgent(
-        name=MEDIA_ANALYST,
-        instructions=MEDIA_ANALYST_INSTRUCTIONS,
+        name=Media_Analyst_ID,
+        instructions=Media_Analyst_Instructions,
         service=AzureChatCompletion(service_id="alvaz-openai",
             deployment_name=os.environ.get("AZURE_OPENAI_DEPLOYMENT_NAME"),  # Your Azure deployment name
             endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
@@ -43,8 +50,8 @@ def get_agents() -> list[Agent]:
         plugins=[MediaAnalystPlugin()]
     )
     metadata_analyst_agent = ChatCompletionAgent(
-        name=METADATA_ANALYST,
-        instructions=METADATA_ANALYST_INSTRUCTIONS,
+        name=Metadata_Analyst_ID,
+        instructions=Metadata_Analyst_Instructions,
         service=AzureChatCompletion(service_id="alvaz-openai",
             deployment_name=os.environ.get("AZURE_OPENAI_DEPLOYMENT_NAME"),  # Your Azure deployment name
             endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
@@ -52,30 +59,46 @@ def get_agents() -> list[Agent]:
             api_version=os.environ.get("AZURE_OPENAI_API_VERSION_2")),
         plugins=[MetadataAnalystPlugin()]
     )
-    objects_analyst_agent = ChatCompletionAgent(
-        name=CONTENT_ANALYST,
-        instructions=OBJECTS_ANALYST_INSTRUCTIONS,
+    content_analyst_agent = ChatCompletionAgent(
+        name=Content_Analyst_ID,
+        instructions=Content_Analyst_Instructions,
         service=AzureChatCompletion(service_id="alvaz-openai",
             deployment_name=os.environ.get("AZURE_OPENAI_DEPLOYMENT_NAME"),  # Your Azure deployment name
             endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
             api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
             api_version=os.environ.get("AZURE_OPENAI_API_VERSION")),
-        plugins=[YoloContentAnalystPlugin()]
+        plugins=[ContentAnalystPlugin()]
     )
-    aicontent_analyst_agent = ChatCompletionAgent(
-        name=AI_CONTENT_ANALYST,
-        instructions=AI_CONTENT_ANALYST_INSTRUCTIONS,
+    expert_content_analyst_agent = ChatCompletionAgent(
+        name=Expert_Content_Analyst_ID,
+        instructions=Expert_Content_Analyst_Instructions,
         service=AzureChatCompletion(service_id="alvaz-openai",
             deployment_name=os.environ.get("AZURE_OPENAI_DEPLOYMENT_NAME"),  # Your Azure deployment name
             endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
             api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
             api_version=os.environ.get("AZURE_OPENAI_API_VERSION")),
-        plugins=[AIContentAnalystPlugin()]
+        plugins=[ExpertContentAnalystPlugin()]
+    )
+    dispatcher_agent = ChatCompletionAgent(
+        name=Dispatcher_ID,
+        instructions=Dispatcher_Instructions,
+        service=AzureChatCompletion(service_id="alvaz-openai",
+            deployment_name=os.environ.get("AZURE_OPENAI_DEPLOYMENT_NAME"),  # Your Azure deployment name
+            endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
+            api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
+            api_version=os.environ.get("AZURE_OPENAI_API_VERSION")),
+        plugins=[DispatcherPlugin()]
     )
 
-
-    # The order of the agents in the list will be the order in which they are executed
-    return [media_validate_agent, metadata_analyst_agent, objects_analyst_agent,aicontent_analyst_agent]
+    # Return all agents in a dictionary
+    # This allows for easy access to each agent by its name.
+    return {
+        "media_validate_agent": media_validate_agent,
+        "metadata_analyst_agent": metadata_analyst_agent,
+        "content_analyst_agent": content_analyst_agent,
+        "expert_content_analyst_agent": expert_content_analyst_agent,
+        "dispatcher_agent": dispatcher_agent
+    }
 
 
 def agent_response_callback(message: ChatMessageContent) -> None:
@@ -84,12 +107,16 @@ def agent_response_callback(message: ChatMessageContent) -> None:
 
 
 async def main(user_query: str) -> None:
-    """Main function to run the agents."""
+    """Main function to run the agents orchestrations."""
+
     # 1. Create a sequential orchestration with multiple agents and an agent
     #    response callback to observe the output from each agent.
-    agents = get_agents()
+    agent_list = get_agents()
+    
+    # Create a sequential orchestration with the agents
+    # The agents will be executed in the order they are listed.
     sequential_orchestration = SequentialOrchestration(
-        members=agents,
+        members=[agent_list("media_validate_agent"), agent_list("metadata_analyst_agent"), agent_list("content_analyst_agent")],
         agent_response_callback=agent_response_callback,
     )
 
@@ -124,32 +151,37 @@ def delete_all_in_directory(directory: str) -> None:
         elif os.path.isdir(entry_path):
             shutil.rmtree(entry_path)
 
-# Start the app
-if __name__ == "__main__":
-    # Prepare the sample_media folder for the sample to run
-
+def __prepare_test_media_files():
+    """
+    Prepares the test media files by copying them from the backup folder to the source folder.
+    This function is called before running the main function to ensure that the sample media files are ready.
+    """
     # Delete all files and subfolders in source media directory
     sample_folder = Path(os.environ.get("MEDIA_SOURCE_PATH")).parent
     delete_all_in_directory(sample_folder)
-    
-    # Copies all files from the backup folder to the source folder.
+
+    # Ensure the source directory exists
     source_folder = Path(os.environ.get("MEDIA_SOURCE_PATH"))
     if not os.path.exists(source_folder):
         os.makedirs(source_folder, exist_ok=True)
+
+    # Copy files from the backup folder to the source folder
     backup_folder = os.environ.get("MEDIA_BACKUP_PATH")
     for filename in os.listdir(backup_folder):
         src_file = os.path.join(backup_folder, filename)
-        dst_file = os.path.join(Path(os.environ.get("MEDIA_SOURCE_PATH")), filename)
+        dst_file = os.path.join(source_folder, filename)
         if os.path.isfile(src_file):
             shutil.copy2(src_file, dst_file)
     print("Sample media files prepared.")
 
-    agents_info_list = init_agents()
-    MEDIA_ANALYST, MEDIA_ANALYST_INSTRUCTIONS = agents_info_list[0]
-    METADATA_ANALYST, METADATA_ANALYST_INSTRUCTIONS = agents_info_list[1]
-    CONTENT_ANALYST, OBJECTS_ANALYST_INSTRUCTIONS = agents_info_list[2]
-    AI_CONTENT_ANALYST, AI_CONTENT_ANALYST_INSTRUCTIONS = agents_info_list[3]
+# Start the app
+if __name__ == "__main__":
+    # Prepare the sample_media folder for the sample to run
+    __prepare_test_media_files()
 
+    # Define the user query for the agents
+    # This query will be passed to the first agent in the sequential orchestration.
     USER_QUERY = "Create a photo album, keeping both photos and videos organized by year and month, from a set of media files stored in the sample_media folder.\n"
     USER_QUERY += f"The source directory for media files is {os.environ.get('MEDIA_SOURCE_PATH')}."
+    
     asyncio.run(main(USER_QUERY))

@@ -5,16 +5,16 @@ import asyncio
 from pathlib import Path
 import os
 
-from semantic_kernel.agents import AgentGroupChat
-from semantic_kernel.agents import AzureAIAgent, AzureAIAgentSettings
-from semantic_kernel.agents.strategies import TerminationStrategy, SequentialSelectionStrategy
-from semantic_kernel.contents.chat_message_content import ChatMessageContent
-from semantic_kernel.contents.utils.author_role import AuthorRole
-from semantic_kernel.functions.kernel_function_decorator import kernel_function
+# from semantic_kernel.agents import AgentGroupChat
+# from semantic_kernel.agents import AzureAIAgent, AzureAIAgentSettings
+# from semantic_kernel.agents.strategies import TerminationStrategy, SequentialSelectionStrategy
+# from semantic_kernel.contents.chat_message_content import ChatMessageContent
+# from semantic_kernel.contents.utils.author_role import AuthorRole
+# from semantic_kernel.functions.kernel_function_decorator import kernel_function
 
-from agent_plugin.MetadataAnalystPlugin import MetadataAnalystPlugin
-from agent_plugin.MediaAnalystPlugin import MediaAnalystPlugin
-from agent_plugin.YoloContentAnalystPlugin import YoloContentAnalystPlugin
+# from agent_plugin.MetadataAnalystPlugin import MetadataAnalystPlugin
+# from agent_plugin.MediaAnalystPlugin import MediaAnalystPlugin
+# from agent_plugin.ContentAnalystPlugin import ContentAnalystPlugin
 
 # Replace with your actual Azure OpenAI endpoint
 agents_endpoint = "https://alvaz-sk-agents-resource.services.ai.azure.com/api/projects/alvaz-sk-agents"
@@ -24,27 +24,33 @@ root_folder = Path(__file__).resolve().parent.parent
 print(root_folder)
 
 def init_agents():
-    MEDIA_ANALYST = "MediaValidateAgent"
+    Media_Analyst_Role = "MediaValidateAgent"
     with open(f"{root_folder}/src/agent_instructions/media_analyst.txt", "r") as file:
-        MEDIA_ANALYST_INSTRUCTIONS = file.read()
+        Media_Analyst_Instructions = file.read()
 
-    METADATA_ANALYST = "MetadataAnalystAgent"
+    Metadata_Analyst_Role = "MetadataAnalystAgent"
     with open(f"{root_folder}/src/agent_instructions/metadata_analyst.txt", "r") as file:
-        METADATA_ANALYST_INSTRUCTIONS = file.read()
+        Metadata_Analyst_Instructions = file.read()
 
-    CONTENT_ANALYST = "ObjectsAnalystAgent"
+    Content_Analyst = "ContentAnalystAgent"
     with open(f"{root_folder}/src/agent_instructions/content_analyst.txt", "r") as file:
-        CONTENT_ANALYST_INSTRUCTIONS = file.read()
+        Content_Analyst_Instructions = file.read()
 
-    AI_CONTENT_ANALYST = "AIContentAnalystAgent"
-    with open(f"{root_folder}/src/agent_instructions/ai_content_analyst.txt", "r") as file:
-        AI_CONTENT_ANALYST_INSTRUCTIONS = file.read()
+    Expert_Content_Analyst = "ExpertContentAnalystAgent"
+    with open(f"{root_folder}/src/agent_instructions/expert_content_analyst.txt", "r") as file:
+        Expert_Content_Analyst_Instructions = file.read()
 
-    return [
-        (MEDIA_ANALYST,MEDIA_ANALYST_INSTRUCTIONS),
-        (METADATA_ANALYST,METADATA_ANALYST_INSTRUCTIONS),
-        (CONTENT_ANALYST,CONTENT_ANALYST_INSTRUCTIONS),
-        (AI_CONTENT_ANALYST,AI_CONTENT_ANALYST_INSTRUCTIONS)]
+    Dispatcher = "DispatcherAgent"
+    with open(f"{root_folder}/src/agent_instructions/dispatcher.txt", "r") as file:
+        Dispatcher_Instructions = file.read()
+
+    return {
+        "media_analyst" : (Media_Analyst_Role, Media_Analyst_Instructions),
+        "meatadata_analyst" : (Metadata_Analyst_Role, Metadata_Analyst_Instructions),
+        "content_analyst" : (Content_Analyst, Content_Analyst_Instructions),
+        "expert_content_analyst" : (Expert_Content_Analyst, Expert_Content_Analyst_Instructions),
+        "dispatcher" : (Dispatcher, Dispatcher_Instructions)
+    }
 
 async def delete_agent(agent_id):
     """Delete an agent by its ID."""

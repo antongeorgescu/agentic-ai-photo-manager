@@ -8,7 +8,7 @@ from semantic_kernel.functions.kernel_function_decorator import kernel_function
 model = YOLO("yolov8n.pt")  # Nano version
 
 # class for YoloContentAnalyst functions
-class YoloContentAnalystPlugin:
+class ContentAnalystPlugin:
     """A plugin that reads and analyzes media files."""
 
     def __write_row_to_text_file(self,file_path: str, row: str) -> None:

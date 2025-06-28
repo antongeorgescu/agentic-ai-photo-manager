@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from semantic_kernel.functions.kernel_function_decorator import kernel_function
 
 # class for AIContentAnalyst functions
-class AIContentAnalystPlugin:
+class ExpertContentAnalystPlugin:
     """A plugin that reads and analyzes media files."""
 
     def __sort_files_numerically(self,folder_path):
